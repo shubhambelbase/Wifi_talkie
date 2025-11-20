@@ -1,21 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#000000">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VOICE_LINK // PTT</title>
+    <title>VOICE_LINK v1.5</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        /* --- TACTICAL UI DESIGN --- */
-        :root {
-            --neon: #00ff41;
-            --bg: #121212;
-            --alert: #ff3333;
-            --panel: #1e1e1e;
-        }
-        
+        /* --- DARK UI --- */
+        :root { --neon: #00ff41; --bg: #121212; --panel: #1e1e1e; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 
         body {
@@ -27,40 +19,180 @@
         .screen { display: none; flex-direction: column; height: 100%; padding: 30px; align-items: center; justify-content: center; gap: 20px; }
         .active { display: flex; }
 
-        h2 { color: var(--neon); text-shadow: 0 0 10px rgba(0,255,65,0.5); margin: 0; letter-spacing: 2px; }
-
         input {
             background: #000; border: 1px solid #444; color: var(--neon);
             padding: 15px; font-size: 18px; width: 100%; max-width: 300px;
             text-align: center; border-radius: 5px; font-family: inherit;
         }
-        input:focus { border-color: var(--neon); outline: none; }
 
         .btn-group { display: flex; gap: 15px; width: 100%; max-width: 300px; }
-        
-        button.action-btn {
+        button {
             flex: 1; padding: 15px; background: #222; color: white; border: 1px solid #444;
             font-weight: bold; border-radius: 5px; cursor: pointer;
         }
-        button.action-btn:active { background: var(--neon); color: black; }
+        button:active { background: var(--neon); color: black; }
 
-        /* MAIN INTERFACE */
+        /* MAIN UI */
         #interface {
             flex: 1; width: 100%; display: flex; flex-direction: column; 
             align-items: center; justify-content: space-between; padding: 40px 20px;
         }
 
-        #status-bar {
-            width: 100%; text-align: center; 
-            border-bottom: 1px solid #333; padding-bottom: 15px;
-        }
-        .sub-text { font-size: 12px; color: #666; margin-top: 5px; }
-
-        /* BIG TALK BUTTON */
         #mic-btn {
             width: 200px; height: 200px; border-radius: 50%;
             background: #222; border: 4px solid #444;
             color: #666; font-size: 24px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        #mic-btn.live { background: var(--neon); color: black; box-shadow: 0 0 50px var(--neon); }
+        
+    </style>
+</head>
+<body>
+
+    <div id="login-screen" class="screen active">
+        <h2 style="color:var(--neon); letter-spacing:2px;">VOICE_LINK</h2>
+        <input type="text" id="username" placeholder="CODENAME (e.g. GAMMA)">
+        <input type="number" id="channel" placeholder="FREQ (e.g. 1111)" pattern="\d*">
+        <div class="btn-group">
+            <button onclick="startApp('HOST')">CREATE</button>
+            <button onclick="startApp('GUEST')">JOIN</button>
+        </div>
+    </div>
+
+    <div id="radio-screen" class="screen" style="padding: 0;">
+        <div id="interface">
+            <div style="text-align:center;">
+                <div style="font-size: 24px; font-weight: bold;" id="display-name">...</div>
+                <div style="font-size: 12px; color: #666; margin-top:5px;">FREQ: <span id="display-channel" style="color:var(--neon)">...</span></div>
+                <div id="partner-status" style="margin-top: 15px; color: gray; font-size: 14px;">WAITING FOR PARTNER...</div>
+            </div>
+
+            <div id="mic-btn" onclick="toggleMic()">MIC OFF</div>
+
+            <div id="log" style="font-size: 10px; color: #444;">System Ready.</div>
+        </div>
+    </div>
+
+    <script>
+        const APP_ID = "VOICE_LINK_FIX_";
+        let peer, conn, call, localStream;
+        let isMuted = true;
+        let myName = "";
+        let nameLoop = null; // The timer for retrying names
+
+        async function startApp(role) {
+            myName = document.getElementById('username').value.toUpperCase();
+            const channel = document.getElementById('channel').value;
+            if(!myName || channel.length !== 4) return alert("NAME & 4 DIGIT CODE REQUIRED");
+
+            // 1. Get Mic
+            try {
+                document.getElementById('log').innerText = "Accessing Mic...";
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                localStream.getAudioTracks()[0].enabled = false; 
+            } catch (e) { return alert("Mic Error: " + e.message); }
+
+            // 2. UI Switch
+            document.getElementById('login-screen').classList.remove('active');
+            document.getElementById('radio-screen').classList.add('active');
+            document.getElementById('display-name').innerText = myName;
+            document.getElementById('display-channel').innerText = channel;
+
+            // 3. Connect
+            if(role === 'HOST') {
+                peer = new Peer(APP_ID + channel);
+                peer.on('open', () => log("Channel Open. Waiting..."));
+                peer.on('connection', c => handleConn(c));
+                peer.on('call', incoming => {
+                    incoming.answer(localStream);
+                    handleCall(incoming);
+                });
+            } else {
+                peer = new Peer();
+                peer.on('open', () => {
+                    log("Connecting...");
+                    const c = peer.connect(APP_ID + channel);
+                    const outCall = peer.call(APP_ID + channel, localStream);
+                    handleConn(c);
+                    handleCall(outCall);
+                });
+            }
+            
+            peer.on('error', err => alert("Error: " + err.type));
+        }
+
+        // --- FIX: ROBUST NAME EXCHANGE ---
+        function handleConn(c) {
+            conn = c;
+            
+            conn.on('open', () => {
+                log("Data Link Open. Sending Name...");
+                
+                // START LOOP: Send Name every 500ms until they reply
+                if(nameLoop) clearInterval(nameLoop);
+                nameLoop = setInterval(() => {
+                    conn.send({ type: 'NAME', name: myName });
+                    console.log("Sending Name...");
+                }, 500);
+            });
+
+            conn.on('data', (data) => {
+                if(data.type === 'NAME') {
+                    // 1. Update Screen
+                    document.getElementById('partner-status').innerHTML = "LINKED: <span style='color:#00ccff'>" + data.name + "</span>";
+                    document.getElementById('partner-status').style.color = "white";
+                    
+                    // 2. Send ACK (Tell them to stop looping)
+                    conn.send({ type: 'ACK' });
+                }
+                
+                if(data.type === 'ACK') {
+                    // They got my name! Stop the loop.
+                    console.log("Name Confirmed.");
+                    clearInterval(nameLoop);
+                    log("Handshake Complete.");
+                }
+            });
+        }
+
+        function handleCall(currentCall) {
+            call = currentCall;
+            call.on('stream', remoteStream => {
+                const audio = new Audio();
+                audio.srcObject = remoteStream;
+                audio.play();
+                log("AUDIO SECURE. READY.");
+            });
+            call.on('close', () => {
+                document.getElementById('partner-status').innerText = "PARTNER DISCONNECTED";
+                document.getElementById('partner-status').style.color = "red";
+            });
+        }
+
+        function toggleMic() {
+            if(!localStream) return;
+            const track = localStream.getAudioTracks()[0];
+            const btn = document.getElementById('mic-btn');
+
+            isMuted = !isMuted;
+            track.enabled = !isMuted;
+
+            if(!isMuted) {
+                btn.classList.add('live');
+                btn.innerText = "ON AIR";
+            } else {
+                btn.classList.remove('live');
+                btn.innerText = "MIC OFF";
+            }
+        }
+
+        function log(text) { document.getElementById('log').innerText = text; }
+
+    </script>
+</body>
+</html>
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 0 30px rgba(0,0,0,0.5);
             transition: all 0.2s; cursor: pointer;
