@@ -19,7 +19,7 @@
   </p>
 
   <h3>
-    <a href="https://shubhambelbase.github.io/Wifi_talkie/">🎙️ Open Web Radio</a>
+    <a href="https://wifitalk.netlify.app">🔴 Start Talking (Live Demo)</a>
   </h3>
 </div>
 
@@ -56,16 +56,13 @@ Vibe coded to be lightweight, instant, and completely decentralized. It establis
 
 ## 🚀 How to Run
 
-### Live Demo
+### Option 1: Live Demo (Instant)
+1.  **Open the link:** [wifitalk.netlify.app](https://wifitalk.netlify.app)
+2.  **Allow Microphone permissions.**
+3.  **Share the Code** with a friend.
+4.  **Start Talking!**
 
-</p>
-
-  <h3>
-    <a href="(https://wifitalk.netlify.app)">🔴 View Live Demo</a>
-  </h3>
-</div>
-
-### Option : Local Setup
+### Option 2: Local Setup
 1.  **Clone the repo:**
     ```bash
     git clone [https://github.com/shubhambelbase/Wifi_talkie.git](https://github.com/shubhambelbase/Wifi_talkie.git)
