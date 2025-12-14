@@ -54,15 +54,8 @@ Vibe coded to be lightweight, instant, and completely decentralized. It establis
 * **Vanilla JavaScript** - No frameworks, just raw performance.
 * **CSS3** - For that sleek, modern interface.
 
-## 🚀 How to Run
 
-### Option 1: Live Demo (Instant)
-1.  **Open the link:** [wifitalk.netlify.app](https://wifitalk.netlify.app)
-2.  **Allow Microphone permissions.**
-3.  **Share the Code** with a friend.
-4.  **Start Talking!**
-
-### Option 2: Local Setup
+### Local Setup
 1.  **Clone the repo:**
     ```bash
     git clone [https://github.com/shubhambelbase/Wifi_talkie.git](https://github.com/shubhambelbase/Wifi_talkie.git)
