@@ -2,559 +2,1787 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VOICE LINK</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>VOICE LINK - Tactical Comms</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* --- THEME CONFIG --- */
-        :root { 
-            --accent: #00ff88; 
-            --accent-g=low: rgba(0, 255, 136, 0.4);
-            --bg-dark: #09090b; 
-            --glass-panel: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-main: #ffffff;
-            --text-muted: #a1a1aa;
-            --danger: #ef4444;
-            --warn: #f59e0b;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; outline: none; }
+        :root {
+            --bg-primary: #09090b;
+            --bg-secondary: #18181b;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --accent-green: #00ff88;
+            --accent-red: #ef4444;
+            --accent-amber: #f59e0b;
+            --glass-bg: rgba(24, 24, 27, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
 
         body {
-            background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at 50% 50%, rgba(0, 255, 136, 0.05) 0%, transparent 60%);
-            color: var(--text-main); 
-            font-family: 'Inter', sans-serif;
-            margin: 0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+            font-family: 'Roboto Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        /* --- UTILS --- */
-        .screen { display: none; flex-direction: column; height: 100%; width: 100%; position: relative; z-index: 1; }
-        .active { display: flex; }
-        .center-flex { display: flex; align-items: center; justify-content: center; flex-direction: column; }
-
-        /* --- LOGIN --- */
-        #login-screen { padding: 40px; justify-content: center; gap: 25px; }
-        .brand-title { 
-            font-size: 28px; font-weight: 600; letter-spacing: -1px; 
-            background: linear-gradient(to right, #fff, #888); 
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        /* Scanline effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 136, 0.03) 2px,
+                rgba(0, 255, 136, 0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 1000;
         }
-        .glass-input {
-            background: var(--glass-panel); border: 1px solid var(--glass-border);
-            color: white; padding: 18px; font-size: 16px; width: 100%; max-width: 320px;
-            text-align: center; border-radius: 12px; transition: 0.3s;
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: var(--accent-green);
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 10px;
+            color: var(--text-secondary);
+            letter-spacing: 3px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 16px;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: var(--text-primary);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        /* Status Indicator */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+        }
+
+        .status-dot.waiting {
+            background: var(--accent-amber);
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-dot.linked {
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+
+        .status-dot.offline {
+            background: var(--accent-red);
+        }
+
+        .status-dot.live {
+            background: var(--accent-red);
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .status-text {
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Radio Interface */
+        .radio-hud {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .channel-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .channel-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+        }
+
+        .channel-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-green);
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .user-info {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Mic Button Container */
+        .mic-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .mic-wrapper {
+            position: relative;
+            width: 200px;
+            height: 200px;
+        }
+
+        .mic-button {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #1a1a1f, #0d0d0f);
+            border: 3px solid var(--glass-border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mic-button:hover {
+            border-color: var(--accent-green);
+        }
+
+        .mic-button.active {
+            border-color: var(--accent-red);
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.4);
+        }
+
+        .mic-button.active .mic-icon {
+            color: var(--accent-red);
+        }
+
+        .mic-icon {
+            width: 60px;
+            height: 60px;
+            color: var(--accent-green);
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+
+        /* Canvas Visualizer */
+        .visualizer-canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* Outer Ring */
+        .mic-ring {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 2px solid var(--glass-border);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .mic-button.active ~ .mic-ring {
+            border-color: var(--accent-red);
+            animation: ring-pulse 1s infinite;
+        }
+
+        @keyframes ring-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.5; }
+        }
+
+        /* Controls */
+        .controls-section {
+            padding: 20px 0;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--glass-bg);
             backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            margin-bottom: 12px;
         }
-        .glass-input:focus { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); transform: translateY(-2px); }
+
+        .control-label {
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid var(--glass-border);
+        }
+
+        .toggle-switch.active {
+            background: rgba(0, 255, 136, 0.3);
+            border-color: var(--accent-green);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active::after {
+            left: 27px;
+            background: var(--accent-green);
+        }
+
+        /* Icon Buttons */
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .icon-btn:hover {
+            border-color: var(--accent-green);
+        }
+
+        .icon-btn:hover svg {
+            color: var(--accent-green);
+        }
+
+        .icon-btn.active {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--accent-red);
+        }
+
+        .icon-btn.active svg {
+            color: var(--accent-red);
+        }
+
+        /* Bottom Actions */
+        .bottom-actions {
+            display: flex;
+            gap: 12px;
+            padding: 20px 0;
+        }
+
         .action-btn {
-            background: white; color: black; border: none; padding: 18px;
-            font-weight: 600; border-radius: 12px; cursor: pointer;
-            width: 100%; max-width: 320px; font-size: 14px; transition: 0.2s;
-        }
-        .action-btn:active { transform: scale(0.96); opacity: 0.9; }
-        .btn-row { display: flex; gap: 15px; width: 100%; max-width: 320px; }
-        .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; }
-
-        /* --- HUD SCREEN --- */
-        .hud-header {
-            padding: 20px; display: flex; justify-content: space-between; align-items: center;
-            position: absolute; top: 0; left: 0; width: 100%; z-index: 10;
-        }
-        .user-info { display: flex; flex-direction: column; }
-        .user-name { font-weight: 600; font-size: 16px; }
-        .freq-badge { font-size: 11px; color: var(--accent); background: rgba(0, 255, 136, 0.1); padding: 2px 6px; border-radius: 4px; align-self: flex-start; margin-top: 4px; }
-        
-        .status-indicator {
-            font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 20px;
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            color: var(--text-muted); display: flex; align-items: center; gap: 6px;
-        }
-        .dot { width: 6px; height: 6px; border-radius: 50%; background: #555; }
-        .status-indicator.secure .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
-        .status-indicator.secure { color: white; border-color: rgba(0, 255, 136, 0.3); }
-
-        /* MIC ORB */
-        .orb-container { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
-        
-        #mic-btn {
-            width: 160px; height: 160px; border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #2a2a2a, #000);
-            border: 1px solid #333;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 5;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05), 0 20px 40px rgba(0,0,0,0.4);
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
             position: relative;
         }
-        #mic-btn svg { width: 40px; height: 40px; fill: #666; transition: 0.3s; }
-        
-        .orb-container.live #mic-btn {
-            background: radial-gradient(circle at 30% 30%, #1a3d2b, #001a0d); border-color: var(--accent);
-            box-shadow: 0 0 30px var(--accent-glow), inset 0 0 20px var(--accent-glow); transform: scale(1.05);
-        }
-        .orb-container.live #mic-btn svg { fill: var(--accent); filter: drop-shadow(0 0 5px var(--accent)); }
-        
-        .pulse-ring {
-            position: absolute; border-radius: 50%; border: 1px solid var(--accent);
-            width: 160px; height: 160px; opacity: 0; pointer-events: none;
-        }
-        .orb-container.live .pulse-ring { animation: ripple 2s infinite; }
-        @keyframes ripple { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(2); opacity: 0; } }
 
-        /* --- NEW TOGGLE SWITCH --- */
-        .mode-wrapper {
-            display: flex; align-items: center; gap: 12px; margin-bottom: 15px;
-            background: rgba(0,0,0,0.4); padding: 8px 16px; border-radius: 30px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .switch-label { font-size: 11px; font-weight: 600; color: #666; transition: 0.3s; }
-        .switch-label.active { color: white; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
-        .switch-label.ptt-active { color: var(--warn); text-shadow: 0 0 5px rgba(245, 158, 11, 0.5); }
-
-        /* The Switch Box */
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-
-        /* The Slider */
-        .slider {
-            position: absolute; cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #333; transition: .4s;
-            border-radius: 34px; border: 1px solid #444;
-        }
-        .slider:before {
-            position: absolute; content: "";
-            height: 18px; width: 18px; left: 2px; bottom: 2px;
-            background-color: white; transition: .4s; border-radius: 50%;
+        .action-btn svg {
+            width: 18px;
+            height: 18px;
         }
 
-        /* Checked State (PTT MODE) */
-        input:checked + .slider { background-color: var(--warn); border-color: var(--warn); }
-        input:checked + .slider:before { transform: translateX(20px); }
-
-        /* --- CONTROL TOOLBAR --- */
-        .controls-toolbar {
-            display: flex; gap: 15px; margin-bottom: 20px; justify-content: center;
-            background: rgba(0,0,0,0.3); padding: 10px 20px; border-radius: 30px;
-            border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(5px);
+        .action-btn:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
         }
 
-        .tool-btn {
-            background: rgba(255,255,255,0.1); border: none; color: white;
-            width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.2s;
+        .action-btn.danger:hover {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
         }
-        .tool-btn:active { transform: scale(0.9); }
-        .tool-btn.danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
-        .tool-btn.danger:active { background: var(--danger); color: white; }
 
-        /* Bottom Dock */
-        .dock {
-            padding: 20px; display: flex; flex-direction: column; align-items: center;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        /* Unread Badge */
+        .unread-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            font-size: 10px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
         }
-        .msg-pill {
-            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white; padding: 12px 25px; border-radius: 30px;
-            font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px;
-            cursor: pointer; transition: 0.2s;
+
+        .unread-badge.show {
+            display: flex;
         }
-        .badge { background: var(--danger); width: 8px; height: 8px; border-radius: 50%; display: none; }
 
-        /* --- CHAT & MODAL --- */
-        #chat-overlay {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 85%;
-            background: rgba(10, 10, 12, 0.95); backdrop-filter: blur(20px);
-            border-top-left-radius: 20px; border-top-right-radius: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-            z-index: 100; display: flex; flex-direction: column;
+        /* Chat Panel */
+        .chat-overlay {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 0;
+            background: var(--bg-secondary);
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+            transition: height 0.3s ease;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        #chat-overlay.open { transform: translateY(0); }
 
-        .chat-header-glass { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        #chat-history { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .bubble { max-width: 80%; padding: 10px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
-        .bubble.them { background: rgba(255,255,255,0.08); color: #e4e4e7; border-bottom-left-radius: 4px; align-self: flex-start; }
-        .bubble.me { background: var(--accent); color: #000; font-weight: 500; border-bottom-right-radius: 4px; align-self: flex-end; }
-        .input-bar { padding: 15px 20px 30px 20px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 10px; align-items: center; }
-        #chat-input { flex: 1; background: rgba(255,255,255,0.05); border: none; padding: 12px 16px; border-radius: 20px; color: white; }
-        #send-btn-mini { background: var(--accent); color: black; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .chat-overlay.open {
+            height: 70vh;
+        }
 
+        .chat-header {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .chat-title {
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--accent-green);
+        }
+
+        .chat-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .chat-message.sent {
+            align-self: flex-end;
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid var(--accent-green);
+        }
+
+        .chat-message.received {
+            align-self: flex-start;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+        }
+
+        .chat-message .sender {
+            font-size: 10px;
+            color: var(--accent-green);
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .chat-input-area {
+            padding: 16px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: 12px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+
+        .chat-send {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-green);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .chat-send svg {
+            width: 20px;
+            height: 20px;
+            color: var(--bg-primary);
+        }
+
+        .chat-send:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+
+        /* Modal */
         .modal-overlay {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-            z-index: 200; display: none; align-items: center; justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
         }
-        .glass-card {
-            background: #111; border: 1px solid rgba(255,255,255,0.1);
-            padding: 30px; border-radius: 20px; width: 85%; max-width: 320px;
-            text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            width: 100%;
+            max-width: 360px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            animation: modal-in 0.3s ease;
+        }
+
+        @keyframes modal-in {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 16px;
+            background: rgba(245, 158, 11, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-icon svg {
+            width: 30px;
+            height: 30px;
+            color: var(--accent-amber);
+        }
+
+        .modal-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .modal-text {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-requester {
+            color: var(--accent-green);
+            font-weight: 700;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: toast-in 0.3s ease;
+            pointer-events: auto;
+        }
+
+        .toast.success {
+            border-color: var(--accent-green);
+        }
+
+        .toast.error {
+            border-color: var(--accent-red);
+        }
+
+        .toast.warning {
+            border-color: var(--accent-amber);
+        }
+
+        @keyframes toast-in {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .toast.success .toast-icon {
+            color: var(--accent-green);
+        }
+
+        .toast.error .toast-icon {
+            color: var(--accent-red);
+        }
+
+        .toast.warning .toast-icon {
+            color: var(--accent-amber);
+        }
+
+        .toast-message {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        /* Mode Indicator */
+        .mode-indicator {
+            text-align: center;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .mode-indicator span {
+            color: var(--accent-green);
+        }
+
+        /* Responsive */
+        @media (max-width: 360px) {
+            .container {
+                padding: 16px;
+            }
+
+            .mic-wrapper {
+                width: 160px;
+                height: 160px;
+            }
+
+            .mic-icon {
+                width: 50px;
+                height: 50px;
+            }
+
+            .visualizer-canvas {
+                width: 140px;
+                height: 140px;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="toast-container" id="toastContainer"></div>
 
-    <div id="login-screen" class="screen active">
-        <div class="center-flex" style="gap:5px; margin-bottom: 20px;">
-            <div class="brand-title">VOICE LINK</div>
-            <div style="font-size: 12px; color: var(--text-muted);">SERVER LESS SECURE CHANNEL</div>
-        </div>
-        <input type="text" id="username" class="glass-input" placeholder="Codename">
-        <input type="number" id="channel" class="glass-input" placeholder="Freq (4 Digits)" pattern="\d*">
-        <div class="btn-row">
-            <button class="action-btn" onclick="initHost()">CREATE HOST</button>
-            <button class="action-btn btn-outline" onclick="initJoin()">JOIN FREQ</button>
-        </div>
-    </div>
-
-    <div id="radio-screen" class="screen">
-        <div class="hud-header">
-            <div class="user-info">
-                <span class="user-name" id="my-label">...</span>
-                <span class="freq-badge" id="freq-label">...</span>
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="8.5" cy="7" r="4"/>
+                    <line x1="20" y1="8" x2="20" y2="14"/>
+                    <line x1="23" y1="11" x2="17" y2="11"/>
+                </svg>
             </div>
-            <div class="status-indicator" id="status-badge">
-                <div class="dot" id="status-dot"></div>
-                <span id="status-text">OFFLINE</span>
+            <div class="modal-title">CONNECTION REQUEST</div>
+            <div class="modal-text">
+                <span class="modal-requester" id="modalRequester">UNKNOWN</span> is requesting to join your frequency channel.
             </div>
-        </div>
-
-        <div class="orb-container" id="mic-container">
-            <div class="pulse-ring"></div>
-            <div id="mic-btn">
-                <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
-            </div>
-        </div>
-
-        <div class="dock">
-            <div class="mode-wrapper">
-                <span id="lbl-toggle" class="switch-label active">TOGGLE</span>
-                <label class="switch">
-                    <input type="checkbox" id="mode-toggle-box" onchange="toggleMode()">
-                    <span class="slider round"></span>
-                </label>
-                <span id="lbl-hold" class="switch-label">HOLD (PTT)</span>
-            </div>
-
-            <div class="controls-toolbar">
-                <button class="tool-btn" id="speaker-btn" onclick="toggleSpeaker()" title="Mute Incoming Audio">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                </button>
-                
-                <button class="tool-btn danger" onclick="disconnect()" title="Disconnect">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-6-6 19.65 19.65 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"></path><line x1="23" y1="1" x2="1" y2="23"></line></svg>
-                </button>
-            </div>
-
-            <div class="msg-pill" onclick="toggleChat()">
-                <span>Messages</span>
-                <div id="unread-badge" class="badge"></div>
-            </div>
-        </div>
-
-        <div id="chat-overlay">
-            <div class="chat-header-glass">
-                <span style="font-weight: 600;">Secure Channel</span>
-                <div onclick="toggleChat()" style="padding:10px; cursor:pointer;">✕</div>
-            </div>
-            <div id="chat-history"></div>
-            <div class="input-bar">
-                <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
-                <button id="send-btn-mini" onclick="sendMsg()">➤</button>
+            <div class="btn-group">
+                <button class="btn btn-danger" id="modalDeny">DENY</button>
+                <button class="btn btn-primary" id="modalAllow">ALLOW</button>
             </div>
         </div>
     </div>
 
-    <div id="approval-modal" class="modal-overlay">
-        <div class="glass-card">
-            <h3 style="margin:0 0 10px 0; color:white;">Connection Request</h3>
-            <p style="color:#aaa; font-size:14px; margin-bottom:25px;">
-                <strong id="request-name" style="color:var(--accent)">...</strong> wants to join.
-            </p>
-            <div class="btn-row" style="margin:0 auto;">
-                <button onclick="respondToRequest(false)" class="action-btn btn-outline" style="border-color:#ef4444; color:#ef4444;">Deny</button>
-                <button onclick="respondToRequest(true)" class="action-btn" style="background:var(--accent); color:black;">Allow</button>
+    <div class="container">
+        <!-- Login Screen -->
+        <div class="screen active" id="loginScreen">
+            <div class="header">
+                <div class="logo">VOICE LINK</div>
+                <div class="subtitle">TACTICAL COMMUNICATIONS</div>
+            </div>
+
+            <div class="glass-card">
+                <div class="form-group">
+                    <label class="form-label">Codename</label>
+                    <input type="text" class="form-input" id="username" placeholder="Enter your codename" maxlength="20">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Frequency Channel</label>
+                    <input type="text" class="form-input" id="channel" placeholder="4-digit code (e.g., 1337)" maxlength="4" pattern="[0-9]*" inputmode="numeric">
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="joinBtn">Join Freq</button>
+                    <button class="btn btn-primary" id="hostBtn">Create Host</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Waiting Screen -->
+        <div class="screen" id="waitingScreen">
+            <div class="header">
+                <div class="logo">VOICE LINK</div>
+                <div class="subtitle">TACTICAL COMMUNICATIONS</div>
+            </div>
+
+            <div class="glass-card" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <div class="status-bar" style="width: 100%;">
+                    <div class="status-dot waiting"></div>
+                    <span class="status-text" id="waitingStatus">WAITING FOR CONNECTION...</span>
+                </div>
+
+                <div class="channel-info" style="margin: 30px 0;">
+                    <div class="channel-label">FREQUENCY</div>
+                    <div class="channel-value" id="waitingChannel">----</div>
+                    <div class="user-info" id="waitingUser">Codename: ---</div>
+                </div>
+
+                <button class="btn btn-danger" id="cancelWaitBtn" style="margin-top: 20px;">CANCEL</button>
+            </div>
+        </div>
+
+        <!-- Radio Screen -->
+        <div class="screen" id="radioScreen">
+            <div class="status-bar">
+                <div class="status-dot" id="connectionStatus"></div>
+                <span class="status-text" id="connectionText">OFFLINE</span>
+            </div>
+
+            <div class="channel-info">
+                <div class="channel-label">FREQUENCY</div>
+                <div class="channel-value" id="radioChannel">----</div>
+                <div class="user-info" id="radioUser">Connected with: ---</div>
+            </div>
+
+            <div class="radio-hud">
+                <div class="mode-indicator">MODE: <span id="modeText">HOLD TO TALK</span></div>
+
+                <div class="mic-container">
+                    <div class="mic-wrapper">
+                        <canvas class="visualizer-canvas" id="visualizer"></canvas>
+                        <button class="mic-button" id="micButton">
+                            <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                <line x1="12" y1="19" x2="12" y2="23"/>
+                                <line x1="8" y1="23" x2="16" y2="23"/>
+                            </svg>
+                        </button>
+                        <div class="mic-ring"></div>
+                    </div>
+                </div>
+
+                <div class="controls-section">
+                    <div class="control-row">
+                        <span class="control-label">TOGGLE MODE</span>
+                        <div class="toggle-switch" id="modeToggle"></div>
+                    </div>
+
+                    <div class="control-row">
+                        <span class="control-label">MUTE INCOMING</span>
+                        <div class="icon-btn" id="muteBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottom-actions">
+                    <button class="action-btn" id="chatBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        MESSAGES
+                        <span class="unread-badge" id="unreadBadge">0</span>
+                    </button>
+                    <button class="action-btn danger" id="disconnectBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+                            <line x1="12" y1="2" x2="12" y2="12"/>
+                        </svg>
+                        DISCONNECT
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <audio id="remote-audio" autoplay></audio>
+    <!-- Chat Overlay -->
+    <div class="chat-overlay" id="chatOverlay">
+        <div class="chat-header">
+            <span class="chat-title">MESSAGES</span>
+            <div class="chat-close" id="chatClose">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </div>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-area">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Type message...">
+            <button class="chat-send" id="chatSend">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"/>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+            </button>
+        </div>
+    </div>
 
     <script>
-        const APP_PREFIX = "VL_TOGGLE_v5.1_";
-        let peer, conn, call, localStream;
-        let myName, freqCode;
-        let isMuted = true;
-        let pttMode = false; // false = toggle, true = hold
-        let speakerOn = true;
-        let pendingConn = null; 
+        // ============ CONFIGURATION ============
+        const PEER_PREFIX = 'VOICELINK_';
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(type) {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            if(type === 'msg') {
-                osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime+0.1);
-                gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+0.1);
-                osc.start(); osc.stop(audioCtx.currentTime+0.1);
-            } else if (type === 'alert') {
-                osc.type = 'triangle'; osc.frequency.value = 300; gain.gain.value = 0.05; osc.start(); osc.stop(audioCtx.currentTime+0.3);
-            } else if (type === 'ptton') {
-                osc.frequency.value = 400; gain.gain.value = 0.05; osc.start(); osc.stop(audioCtx.currentTime+0.1);
-            } else if (type === 'pttoff') {
-                osc.frequency.value = 300; gain.gain.value = 0.05; osc.start(); osc.stop(audioCtx.currentTime+0.1);
+        // ============ STATE ============
+        const state = {
+            peer: null,
+            connection: null,
+            call: null,
+            localStream: null,
+            remoteStream: null,
+            isHost: false,
+            username: '',
+            channel: '',
+            remoteUsername: '',
+            isMicActive: false,
+            isToggleMode: false,
+            isMuted: false,
+            isChatOpen: false,
+            unreadCount: 0,
+            pendingConnection: null,
+            audioContext: null,
+            analyser: null,
+            animationId: null
+        };
+
+        // ============ DOM ELEMENTS ============
+        const elements = {
+            // Screens
+            loginScreen: document.getElementById('loginScreen'),
+            waitingScreen: document.getElementById('waitingScreen'),
+            radioScreen: document.getElementById('radioScreen'),
+
+            // Login
+            username: document.getElementById('username'),
+            channel: document.getElementById('channel'),
+            hostBtn: document.getElementById('hostBtn'),
+            joinBtn: document.getElementById('joinBtn'),
+
+            // Waiting
+            waitingStatus: document.getElementById('waitingStatus'),
+            waitingChannel: document.getElementById('waitingChannel'),
+            waitingUser: document.getElementById('waitingUser'),
+            cancelWaitBtn: document.getElementById('cancelWaitBtn'),
+
+            // Radio
+            connectionStatus: document.getElementById('connectionStatus'),
+            connectionText: document.getElementById('connectionText'),
+            radioChannel: document.getElementById('radioChannel'),
+            radioUser: document.getElementById('radioUser'),
+            modeText: document.getElementById('modeText'),
+            micButton: document.getElementById('micButton'),
+            modeToggle: document.getElementById('modeToggle'),
+            muteBtn: document.getElementById('muteBtn'),
+            chatBtn: document.getElementById('chatBtn'),
+            disconnectBtn: document.getElementById('disconnectBtn'),
+            visualizer: document.getElementById('visualizer'),
+            unreadBadge: document.getElementById('unreadBadge'),
+
+            // Chat
+            chatOverlay: document.getElementById('chatOverlay'),
+            chatClose: document.getElementById('chatClose'),
+            chatMessages: document.getElementById('chatMessages'),
+            chatInput: document.getElementById('chatInput'),
+            chatSend: document.getElementById('chatSend'),
+
+            // Modal
+            modalOverlay: document.getElementById('modalOverlay'),
+            modalRequester: document.getElementById('modalRequester'),
+            modalAllow: document.getElementById('modalAllow'),
+            modalDeny: document.getElementById('modalDeny'),
+
+            // Toast
+            toastContainer: document.getElementById('toastContainer')
+        };
+
+        // ============ AUDIO CONTEXT & SOUND FX ============
+        function initAudioContext() {
+            if (!state.audioContext) {
+                state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return state.audioContext;
+        }
+
+        function playBeep(frequency, duration, type = 'sine', volume = 0.3) {
+            const ctx = initAudioContext();
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            gainNode.gain.setValueAtTime(volume, ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+            oscillator.start(ctx.currentTime);
+            oscillator.stop(ctx.currentTime + duration);
+        }
+
+        function playPTTPress() {
+            playBeep(880, 0.1, 'sine', 0.4);
+            setTimeout(() => playBeep(1100, 0.08, 'sine', 0.3), 50);
+        }
+
+        function playPTTRelease() {
+            playBeep(440, 0.15, 'sine', 0.3);
+            playBeep(220, 0.2, 'sawtooth', 0.05);
+        }
+
+        function playMessageChime() {
+            playBeep(660, 0.1, 'sine', 0.3);
+            setTimeout(() => playBeep(880, 0.1, 'sine', 0.3), 100);
+            setTimeout(() => playBeep(1100, 0.15, 'sine', 0.3), 200);
+        }
+
+        function playConnectionAlert() {
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    playBeep(800, 0.15, 'square', 0.2);
+                }, i * 200);
             }
         }
 
-        // --- INIT ---
-        async function getMic() {
+        // ============ TOAST NOTIFICATIONS ============
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            let iconPath = '';
+            switch (type) {
+                case 'success':
+                    iconPath = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>';
+                    break;
+                case 'error':
+                    iconPath = '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>';
+                    break;
+                case 'warning':
+                    iconPath = '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
+                    break;
+            }
+
+            toast.innerHTML = `
+                <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    ${iconPath}
+                </svg>
+                <span class="toast-message">${message}</span>
+            `;
+
+            elements.toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ============ SCREEN MANAGEMENT ============
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // ============ STATUS UPDATES ============
+        function updateStatus(status) {
+            const statusEl = elements.connectionStatus;
+            const textEl = elements.connectionText;
+
+            statusEl.className = 'status-dot';
+
+            switch (status) {
+                case 'waiting':
+                    statusEl.classList.add('waiting');
+                    textEl.textContent = 'WAITING';
+                    break;
+                case 'linked':
+                    statusEl.classList.add('linked');
+                    textEl.textContent = 'LINKED';
+                    break;
+                case 'live':
+                    statusEl.classList.add('live');
+                    textEl.textContent = 'LIVE';
+                    break;
+                case 'offline':
+                default:
+                    statusEl.classList.add('offline');
+                    textEl.textContent = 'OFFLINE';
+            }
+        }
+
+        // ============ MODAL ============
+        function showModal(requesterName) {
+            elements.modalRequester.textContent = requesterName;
+            elements.modalOverlay.classList.add('show');
+            playConnectionAlert();
+        }
+
+        function hideModal() {
+            elements.modalOverlay.classList.remove('show');
+        }
+
+        // ============ PEER CONNECTION ============
+        function createPeer(isHost) {
+            const peerId = isHost ? PEER_PREFIX + state.channel : PEER_PREFIX + state.channel + '_' + Date.now();
+
+            state.peer = new Peer(peerId);
+
+            state.peer.on('open', (id) => {
+                console.log('Peer connected with ID:', id);
+                if (isHost) {
+                    showToast('Channel created successfully', 'success');
+                    elements.waitingStatus.textContent = 'WAITING FOR PEERS...';
+                } else {
+                    connectToHost();
+                }
+            });
+
+            state.peer.on('error', (err) => {
+                console.error('Peer error:', err);
+                if (err.type === 'unavailable-id') {
+                    showToast('Channel already exists. Try joining instead.', 'error');
+                } else if (err.type === 'peer-unavailable') {
+                    showToast('Channel not found. Check the frequency.', 'error');
+                } else {
+                    showToast('Connection error: ' + err.type, 'error');
+                }
+                cleanup();
+                showScreen('loginScreen');
+            });
+
+            state.peer.on('connection', (conn) => {
+                handleIncomingConnection(conn);
+            });
+
+            state.peer.on('call', (call) => {
+                handleIncomingCall(call);
+            });
+        }
+
+        function connectToHost() {
+            const hostId = PEER_PREFIX + state.channel;
+            const conn = state.peer.connect(hostId, {
+                metadata: { username: state.username }
+            });
+
+            conn.on('open', () => {
+                console.log('Data connection opened');
+                state.connection = conn;
+                setupConnectionHandlers(conn);
+            });
+
+            conn.on('error', (err) => {
+                console.error('Connection error:', err);
+                showToast('Failed to connect to channel', 'error');
+            });
+        }
+
+        function handleIncomingConnection(conn) {
+            const requesterName = conn.metadata?.username || 'Unknown';
+            state.pendingConnection = conn;
+            showModal(requesterName);
+        }
+
+        function acceptConnection() {
+            if (!state.pendingConnection) return;
+
+            state.connection = state.pendingConnection;
+            state.remoteUsername = state.pendingConnection.metadata?.username || 'Unknown';
+            state.pendingConnection = null;
+
+            hideModal();
+            setupConnectionHandlers(state.connection);
+
+            state.connection.send({
+                type: 'accepted',
+                username: state.username
+            });
+
+            startCall();
+        }
+
+        function denyConnection() {
+            if (state.pendingConnection) {
+                state.pendingConnection.send({ type: 'denied' });
+                state.pendingConnection.close();
+                state.pendingConnection = null;
+            }
+            hideModal();
+            showToast('Connection denied', 'warning');
+        }
+
+        function setupConnectionHandlers(conn) {
+            conn.on('data', (data) => {
+                handleDataMessage(data);
+            });
+
+            conn.on('close', () => {
+                showToast('Peer disconnected', 'warning');
+                cleanup();
+                showScreen('loginScreen');
+            });
+        }
+
+        function handleDataMessage(data) {
+            switch (data.type) {
+                case 'accepted':
+                    state.remoteUsername = data.username;
+                    showToast('Connection accepted!', 'success');
+                    startCall();
+                    break;
+                case 'denied':
+                    showToast('Connection was denied', 'error');
+                    cleanup();
+                    showScreen('loginScreen');
+                    break;
+                case 'chat':
+                    addChatMessage(data.message, data.sender, false);
+                    if (!state.isChatOpen) {
+                        state.unreadCount++;
+                        updateUnreadBadge();
+                        playMessageChime();
+                    }
+                    break;
+                case 'mic-state':
+                    if (data.active) {
+                        updateStatus('live');
+                    } else {
+                        updateStatus('linked');
+                    }
+                    break;
+            }
+        }
+
+        // ============ MEDIA & CALL ============
+        async function startCall() {
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                localStream.getAudioTracks()[0].enabled = false; 
-                return true;
-            } catch(e) { alert("Mic Access Required"); return false; }
-        }
+                state.localStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
 
-        function switchScreen(showRadio) {
-            if(showRadio) {
-                document.getElementById('login-screen').classList.remove('active');
-                document.getElementById('radio-screen').classList.add('active');
-                document.getElementById('my-label').innerText = myName;
-                document.getElementById('freq-label').innerText = "FREQ: " + freqCode;
-            } else {
-                document.getElementById('radio-screen').classList.remove('active');
-                document.getElementById('login-screen').classList.add('active');
-                updateStatus("OFFLINE", false);
-                document.getElementById('mic-container').classList.remove('live');
-                document.getElementById('chat-history').innerHTML = "";
+                // Start muted
+                state.localStream.getAudioTracks().forEach(track => {
+                    track.enabled = false;
+                });
+
+                if (state.isHost) {
+                    const call = state.peer.call(state.connection.peer, state.localStream);
+                    handleCall(call);
+                }
+
+                setupVisualizer();
+                showRadioScreen();
+
+            } catch (err) {
+                console.error('Media error:', err);
+                showToast('Microphone access denied', 'error');
+                cleanup();
+                showScreen('loginScreen');
             }
         }
 
-        // --- HOST/JOIN ---
-        async function initHost() {
-            if(!validateInput()) return;
-            if(!await getMic()) return;
-            switchScreen(true);
-            
-            peer = new Peer(APP_PREFIX + freqCode);
-            peer.on('open', () => updateStatus("WAITING", false));
-            peer.on('connection', c => {
-                c.on('open', () => {
-                    c.on('data', d => {
-                        if(d.type === 'REQ') {
-                            pendingConn = c;
-                            document.getElementById('request-name').innerText = d.name;
-                            document.getElementById('approval-modal').style.display = "flex";
-                            playSound('alert');
-                        }
-                        if(d.type === 'CHAT') handleChat(d);
+        function handleIncomingCall(call) {
+            if (!state.localStream) {
+                navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                }).then(stream => {
+                    state.localStream = stream;
+                    stream.getAudioTracks().forEach(track => {
+                        track.enabled = false;
                     });
-                    c.on('close', () => {
-                        updateStatus("WAITING", false);
-                        resetCall();
-                    });
+                    call.answer(stream);
+                    handleCall(call);
+                    setupVisualizer();
+                    showRadioScreen();
                 });
-            });
-            peer.on('call', callReq => {
-                callReq.answer(localStream);
-                handleStream(callReq);
-            });
-        }
-
-        async function initJoin() {
-            if(!validateInput()) return;
-            if(!await getMic()) return;
-            switchScreen(true);
-            updateStatus("CONNECTING", false);
-
-            peer = new Peer();
-            peer.on('open', () => {
-                const c = peer.connect(APP_PREFIX + freqCode);
-                conn = c;
-                c.on('open', () => {
-                    updateStatus("VERIFYING", false);
-                    c.send({ type: 'REQ', name: myName });
-                });
-                c.on('data', d => {
-                    if(d.type === 'OK') {
-                        updateStatus("LINKED", true);
-                        call = peer.call(APP_PREFIX + freqCode, localStream);
-                        handleStream(call);
-                    } 
-                    else if(d.type === 'NO') { alert("Access Denied"); disconnect(); }
-                    else if(d.type === 'CHAT') handleChat(d);
-                });
-                c.on('close', () => { alert("Disconnected"); disconnect(); });
-            });
-        }
-
-        // --- LOGIC ---
-        function respondToRequest(allow) {
-            document.getElementById('approval-modal').style.display = "none";
-            if(!pendingConn) return;
-            if(allow) {
-                pendingConn.send({ type: 'OK' });
-                conn = pendingConn;
-                updateStatus("LINKED", true);
             } else {
-                pendingConn.send({ type: 'NO' });
-                setTimeout(() => pendingConn.close(), 500);
-            }
-            pendingConn = null;
-        }
-
-        function handleStream(currentCall) {
-            call = currentCall;
-            call.on('stream', remoteStream => {
-                const audio = document.getElementById('remote-audio');
-                audio.srcObject = remoteStream;
-            });
-        }
-
-        function resetCall() {
-            if(call) call.close();
-            const audio = document.getElementById('remote-audio');
-            audio.srcObject = null;
-        }
-
-        function disconnect() {
-            if(conn) conn.close();
-            if(call) call.close();
-            if(peer) peer.destroy();
-            if(localStream) localStream.getTracks().forEach(t => t.stop());
-            switchScreen(false);
-        }
-
-        // --- CONTROLS ---
-        function toggleSpeaker() {
-            const audio = document.getElementById('remote-audio');
-            const btn = document.getElementById('speaker-btn');
-            speakerOn = !speakerOn;
-            audio.muted = !speakerOn;
-            
-            if(speakerOn) {
-                btn.classList.remove('danger');
-                btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
-            } else {
-                btn.classList.add('danger');
-                btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v6a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>'; // Mute icon
+                call.answer(state.localStream);
+                handleCall(call);
             }
         }
 
-        function toggleMode() {
-            const checkBox = document.getElementById('mode-toggle-box');
-            pttMode = checkBox.checked;
+        function handleCall(call) {
+            state.call = call;
 
-            const lblToggle = document.getElementById('lbl-toggle');
-            const lblHold = document.getElementById('lbl-hold');
-            
-            if(pttMode) {
-                lblToggle.classList.remove('active');
-                lblHold.classList.add('ptt-active');
-            } else {
-                lblToggle.classList.add('active');
-                lblHold.classList.remove('ptt-active');
-            }
-            
-            // Safety: Reset Mic if open
-            if(!isMuted) setMic(false);
+            call.on('stream', (remoteStream) => {
+                state.remoteStream = remoteStream;
+                playRemoteAudio(remoteStream);
+                updateStatus('linked');
+            });
+
+            call.on('close', () => {
+                showToast('Call ended', 'warning');
+            });
+
+            call.on('error', (err) => {
+                console.error('Call error:', err);
+                showToast('Call error occurred', 'error');
+            });
         }
 
-        // --- MIC HANDLING ---
-        const micBtn = document.getElementById('mic-btn');
-        const container = document.getElementById('mic-container');
+        function playRemoteAudio(stream) {
+            let audio = document.getElementById('remoteAudio');
+            if (!audio) {
+                audio = document.createElement('audio');
+                audio.id = 'remoteAudio';
+                audio.autoplay = true;
+                document.body.appendChild(audio);
+            }
+            audio.srcObject = stream;
+        }
 
-        // Toggle Mode Listener
-        micBtn.addEventListener('click', () => {
-            if(!pttMode) {
-                setMic(isMuted); 
+        function showRadioScreen() {
+            elements.radioChannel.textContent = state.channel;
+            elements.radioUser.textContent = `Connected with: ${state.remoteUsername}`;
+            showScreen('radioScreen');
+            updateStatus('linked');
+        }
+
+        // ============ VISUALIZER ============
+        function setupVisualizer() {
+            const canvas = elements.visualizer;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = 180;
+            canvas.height = 180;
+
+            const audioCtx = initAudioContext();
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+
+            const source = audioCtx.createMediaStreamSource(state.localStream);
+            source.connect(analyser);
+
+            state.analyser = analyser;
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function draw() {
+                state.animationId = requestAnimationFrame(draw);
+
+                analyser.getByteFrequencyData(dataArray);
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const radius = 60;
+                const bars = 32;
+
+                for (let i = 0; i < bars; i++) {
+                    const angle = (i / bars) * Math.PI * 2 - Math.PI / 2;
+                    const dataIndex = Math.floor((i / bars) * bufferLength);
+                    const value = dataArray[dataIndex] / 255;
+
+                    const barHeight = value * 25 + 2;
+
+                    const x1 = centerX + Math.cos(angle) * radius;
+                    const y1 = centerY + Math.sin(angle) * radius;
+                    const x2 = centerX + Math.cos(angle) * (radius + barHeight);
+                    const y2 = centerY + Math.sin(angle) * (radius + barHeight);
+
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.strokeStyle = state.isMicActive ? 
+                        `rgba(239, 68, 68, ${0.5 + value * 0.5})` : 
+                        `rgba(0, 255, 136, ${0.3 + value * 0.5})`;
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                }
+            }
+
+            draw();
+        }
+
+        // ============ MIC CONTROL ============
+        function activateMic() {
+            if (!state.localStream) return;
+
+            state.isMicActive = true;
+            state.localStream.getAudioTracks().forEach(track => {
+                track.enabled = true;
+            });
+
+            elements.micButton.classList.add('active');
+            playPTTPress();
+
+            if (state.connection) {
+                state.connection.send({ type: 'mic-state', active: true });
+            }
+        }
+
+        function deactivateMic() {
+            if (!state.localStream) return;
+
+            state.isMicActive = false;
+            state.localStream.getAudioTracks().forEach(track => {
+                track.enabled = false;
+            });
+
+            elements.micButton.classList.remove('active');
+            playPTTRelease();
+
+            if (state.connection) {
+                state.connection.send({ type: 'mic-state', active: false });
+            }
+        }
+
+        function toggleMic() {
+            if (state.isMicActive) {
+                deactivateMic();
+            } else {
+                activateMic();
+            }
+        }
+
+        // ============ CHAT ============
+        function openChat() {
+            state.isChatOpen = true;
+            elements.chatOverlay.classList.add('open');
+            state.unreadCount = 0;
+            updateUnreadBadge();
+            elements.chatInput.focus();
+        }
+
+        function closeChat() {
+            state.isChatOpen = false;
+            elements.chatOverlay.classList.remove('open');
+        }
+
+        function sendChatMessage() {
+            const message = elements.chatInput.value.trim();
+            if (!message || !state.connection) return;
+
+            state.connection.send({
+                type: 'chat',
+                message: message,
+                sender: state.username
+            });
+
+            addChatMessage(message, state.username, true);
+            elements.chatInput.value = '';
+        }
+
+        function addChatMessage(message, sender, isSent) {
+            const msgEl = document.createElement('div');
+            msgEl.className = `chat-message ${isSent ? 'sent' : 'received'}`;
+            msgEl.innerHTML = `
+                <div class="sender">${sender}</div>
+                <div>${escapeHtml(message)}</div>
+            `;
+            elements.chatMessages.appendChild(msgEl);
+            elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+        }
+
+        function updateUnreadBadge() {
+            elements.unreadBadge.textContent = state.unreadCount;
+            elements.unreadBadge.classList.toggle('show', state.unreadCount > 0);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============ CLEANUP ============
+        function cleanup() {
+            if (state.call) {
+                state.call.close();
+                state.call = null;
+            }
+
+            if (state.connection) {
+                state.connection.close();
+                state.connection = null;
+            }
+
+            if (state.peer) {
+                state.peer.destroy();
+                state.peer = null;
+            }
+
+            if (state.localStream) {
+                state.localStream.getTracks().forEach(track => track.stop());
+                state.localStream = null;
+            }
+
+            if (state.animationId) {
+                cancelAnimationFrame(state.animationId);
+                state.animationId = null;
+            }
+
+            const remoteAudio = document.getElementById('remoteAudio');
+            if (remoteAudio) {
+                remoteAudio.remove();
+            }
+
+            state.remoteStream = null;
+            state.isMicActive = false;
+            state.unreadCount = 0;
+            elements.chatMessages.innerHTML = '';
+            updateUnreadBadge();
+            elements.micButton.classList.remove('active');
+        }
+
+        // ============ EVENT LISTENERS ============
+        // Login
+        elements.hostBtn.addEventListener('click', () => {
+            const username = elements.username.value.trim();
+            const channel = elements.channel.value.trim();
+
+            if (!username) {
+                showToast('Please enter a codename', 'warning');
+                return;
+            }
+
+            if (!channel || channel.length !== 4 || !/^\d{4}$/.test(channel)) {
+                showToast('Please enter a valid 4-digit channel', 'warning');
+                return;
+            }
+
+            state.username = username;
+            state.channel = channel;
+            state.isHost = true;
+
+            elements.waitingChannel.textContent = channel;
+            elements.waitingUser.textContent = `Codename: ${username}`;
+            showScreen('waitingScreen');
+
+            createPeer(true);
+        });
+
+        elements.joinBtn.addEventListener('click', () => {
+            const username = elements.username.value.trim();
+            const channel = elements.channel.value.trim();
+
+            if (!username) {
+                showToast('Please enter a codename', 'warning');
+                return;
+            }
+
+            if (!channel || channel.length !== 4 || !/^\d{4}$/.test(channel)) {
+                showToast('Please enter a valid 4-digit channel', 'warning');
+                return;
+            }
+
+            state.username = username;
+            state.channel = channel;
+            state.isHost = false;
+
+            elements.waitingChannel.textContent = channel;
+            elements.waitingUser.textContent = `Codename: ${username}`;
+            elements.waitingStatus.textContent = 'CONNECTING...';
+            showScreen('waitingScreen');
+
+            createPeer(false);
+        });
+
+        elements.cancelWaitBtn.addEventListener('click', () => {
+            cleanup();
+            showScreen('loginScreen');
+        });
+
+        // Modal
+        elements.modalAllow.addEventListener('click', acceptConnection);
+        elements.modalDeny.addEventListener('click', denyConnection);
+
+        // Mic Button
+        elements.micButton.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            if (!state.isToggleMode) {
+                activateMic();
             }
         });
 
-        // PTT Mode Listeners (Touch/Mouse)
-        const startPTT = (e) => { if(pttMode) { e.preventDefault(); setMic(true); } };
-        const endPTT = (e) => { if(pttMode) { e.preventDefault(); setMic(false); } };
+        elements.micButton.addEventListener('mouseup', () => {
+            if (!state.isToggleMode) {
+                deactivateMic();
+            }
+        });
 
-        micBtn.addEventListener('mousedown', startPTT);
-        micBtn.addEventListener('mouseup', endPTT);
-        micBtn.addEventListener('mouseleave', endPTT);
-        micBtn.addEventListener('touchstart', startPTT);
-        micBtn.addEventListener('touchend', endPTT);
+        elements.micButton.addEventListener('mouseleave', () => {
+            if (!state.isToggleMode && state.isMicActive) {
+                deactivateMic();
+            }
+        });
 
-        function setMic(active) {
-            if(!localStream || !conn) return;
-            const track = localStream.getAudioTracks()[0];
-            
-            if(active) {
-                isMuted = false;
-                track.enabled = true;
-                container.classList.add('live');
-                playSound('ptton');
+        elements.micButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!state.isToggleMode) {
+                activateMic();
+            }
+        });
+
+        elements.micButton.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (!state.isToggleMode) {
+                deactivateMic();
+            }
+        });
+
+        elements.micButton.addEventListener('click', () => {
+            if (state.isToggleMode) {
+                toggleMic();
+            }
+        });
+
+        // Mode Toggle
+        elements.modeToggle.addEventListener('click', () => {
+            state.isToggleMode = !state.isToggleMode;
+            elements.modeToggle.classList.toggle('active', state.isToggleMode);
+            elements.modeText.textContent = state.isToggleMode ? 'TOGGLE MUTE' : 'HOLD TO TALK';
+
+            if (state.isMicActive && !state.isToggleMode) {
+                deactivateMic();
+            }
+        });
+
+        // Mute
+        elements.muteBtn.addEventListener('click', () => {
+            state.isMuted = !state.isMuted;
+            elements.muteBtn.classList.toggle('active', state.isMuted);
+
+            const remoteAudio = document.getElementById('remoteAudio');
+            if (remoteAudio) {
+                remoteAudio.muted = state.isMuted;
+            }
+
+            // Update icon
+            if (state.isMuted) {
+                elements.muteBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <line x1="23" y1="9" x2="17" y2="15"/>
+                        <line x1="17" y1="9" x2="23" y2="15"/>
+                    </svg>
+                `;
             } else {
-                isMuted = true;
-                track.enabled = false;
-                container.classList.remove('live');
-                playSound('pttoff');
+                elements.muteBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    </svg>
+                `;
             }
-        }
 
-        // --- MESSAGING ---
-        function toggleChat() {
-            document.getElementById('chat-overlay').classList.toggle('open');
-            document.getElementById('unread-badge').style.display = 'none';
-        }
+            showToast(state.isMuted ? 'Incoming audio muted' : 'Incoming audio unmuted', 'success');
+        });
 
-        function sendMsg() {
-            const input = document.getElementById('chat-input');
-            const txt = input.value.trim();
-            if(!txt || !conn) return;
-            conn.send({ type: 'CHAT', msg: txt, sender: myName });
-            addBubble(txt, 'me');
-            input.value = "";
-        }
-
-        function handleChat(data) {
-            addBubble(data.msg, 'them');
-            playSound('msg');
-            if(!document.getElementById('chat-overlay').classList.contains('open')) {
-                document.getElementById('unread-badge').style.display = 'block';
+        // Chat
+        elements.chatBtn.addEventListener('click', openChat);
+        elements.chatClose.addEventListener('click', closeChat);
+        elements.chatSend.addEventListener('click', sendChatMessage);
+        elements.chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendChatMessage();
             }
-        }
+        });
 
-        function addBubble(text, type) {
-            const hist = document.getElementById('chat-history');
-            const div = document.createElement('div');
-            div.className = `bubble ${type}`;
-            div.innerText = text;
-            hist.appendChild(div);
-            hist.scrollTop = hist.scrollHeight;
-        }
+        // Disconnect
+        elements.disconnectBtn.addEventListener('click', () => {
+            cleanup();
+            showScreen('loginScreen');
+            showToast('Disconnected from channel', 'success');
+        });
 
-        document.getElementById('chat-input').addEventListener('keypress', e => { if(e.key === 'Enter') sendMsg(); });
+        // Channel input validation
+        elements.channel.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+        });
 
-        // UTILS
-        function validateInput() {
-            myName = document.getElementById('username').value.toUpperCase();
-            freqCode = document.getElementById('channel').value;
-            if(!myName || freqCode.length !== 4) { alert("Invalid Credentials"); return false; }
-            return true;
-        }
-        function updateStatus(txt, secure) {
-            document.getElementById('status-text').innerText = txt;
-            const b = document.getElementById('status-badge');
-            secure ? b.classList.add('secure') : b.classList.remove('secure');
-        }
+        // Prevent context menu on mic button
+        elements.micButton.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Initialize audio context on first interaction
+        document.addEventListener('click', () => {
+            initAudioContext();
+        }, { once: true });
     </script>
 </body>
 </html>
-
