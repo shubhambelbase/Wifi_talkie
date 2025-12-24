@@ -1,25 +1,26 @@
-
-<div align="center">
+ <div align="center">
 
   <img src="https://img.shields.io/badge/✨%20Vibe%20Coded-100%25-8A2BE2?style=for-the-badge" alt="Vibe Coded" />
   <br />
   <br />
 
-  <h1>🥛 MILK_TRACKER_PRO</h1>
+  <h1>🎙️ VOICE_LINK</h1>
   
   <p>
-    <strong>Aesthetic daily dairy log. Automatic cost calculation. Zero friction.</strong>
+    <strong>Secure, serverless P2P communication channel. Voice + Text + Tactical Glass UI.</strong>
   </p>
 
   <p>
-    <img src="https://img.shields.io/badge/Status-Stable-00ff88?style=flat-square" alt="Status" />
-    <img src="https://img.shields.io/badge/Data-Local_Storage-blue?style=flat-square" alt="Data" />
-    <img src="https://img.shields.io/badge/Tech-HTML5%20%7C%20CSS3%20%7C%20Vanilla_JS-orange?style=flat-square" alt="Tech Stack" />
-    <img src="https://img.shields.io/badge/Size-Single_File-lightgrey?style=flat-square" alt="Size" />
+    <img src="https://img.shields.io/badge/Status-Deployed-00ff88?style=flat-square" alt="Status" />
+    <img src="https://img.shields.io/badge/Security-DTLS%2FSRTP-blue?style=flat-square" alt="Security" />
+    <img src="https://img.shields.io/badge/Tech-WebRTC%20%7C%20PeerJS%20%7C%20Vanilla-orange?style=flat-square" alt="Tech Stack" />
+    <a href="https://github.com/shubhambelbase/voice_link/stargazers">
+      <img src="https://img.shields.io/github/stars/shubhambelbase/voice_link?style=social" alt="Stars" />
+    </a>
   </p>
 
   <h3>
-    <a href="#">🟢 View Demo (Open index.html)</a>
+    <a href="https://wifitalk.netlify.app">🟢 Establish Link (Live Demo)</a>
   </h3>
 </div>
 
@@ -27,45 +28,49 @@
 
 ## ⚡ The Vibe
 
-**MILK_TRACKER_PRO** isn't just a spreadsheet; it's a daily ritual. Rebuilt with a modern **Glassmorphism UI**, it features floating background aesthetics, smooth micro-interactions, and a tactile slider interface.
+**VOICE_LINK** isn't just a calling app; it's a secure frequency for you and your team. Rebuilt with a modern **Glassmorphism HUD**, it combines the tactical feel of a radio with the privacy of an encrypted tunnel.
 
-No servers. No logins. No loading screens. Just you and your data.
+No databases. No chat logs. No middleman. Just a direct link between two devices.
 
-## 🔒 Privacy & Persistence
+## 🔒 Security & Privacy
 
-* **Offline First:** Your data lives in your browser's `LocalStorage`.
-* **Zero Cloud:** No data is ever sent to a server. It works 100% offline.
-* **Persistent:** Refresh the page, close the browser, or restart your device—your records stay safe.
+* **Ephemeral:** Messages and voice data are never stored. Once the tab closes, they are gone forever.
+* **Encrypted:** Uses WebRTC (DTLS/SRTP) to encrypt media streams.
+* **Access Control:** Host approval system prevents unauthorized users from joining your frequency.
 
 ## ✨ Key Features
 
-| 🎛️ **Tactical Controls** | 🛡️ **Smart Core** |
+| 🎛️ **Tactical Controls** | 🛡️ **Secure Core** |
 | :--- | :--- |
-| **Touch Sliders:** Drag to adjust quantity (0.5L - 5L) | **Auto Calculator:** Real-time monthly cost totals |
-| **Month Scrubber:** Swipe through the year instantly | **Visual Grid:** Instant feedback on logged days |
-| **Glass UI:** Translucent blur-effect interface | **Price Settings:** Set custom rate per liter |
-| **Haptic Feel:** Smooth animations and transitions | **Export Ready:** Data stored in clear JSON format |
+| **Hybrid PTT:** Toggle Mode or Hold-to-Talk | **Approval System:** Host must verify guests |
+| **Glass UI:** Modern, blur-effect interface | **Encrypted Chat:** Integrated text messaging |
+| **Incoming Mute:** Silence noisy partners | **Disconnect:** One-click secure termination |
+| **Audio Feedback:** Generated beep notifications | **Zero Latency:** P2P Direct Audio |
 
 ## 🛠️ Built With
 
-* **Semantic HTML5** - The skeleton.
-* **Modern CSS3** - Variables, Flexbox, Grid, and Backdrop-Filters.
-* **Vanilla JavaScript** - Zero libraries, instant execution.
-* **SVG Icons** - Lightweight, scalable graphics.
+* **HTML5 Audio API** - Custom oscillator beeps and audio routing.
+* **WebRTC (PeerJS)** - The engine behind the serverless peer-to-peer connection.
+* **Vanilla JavaScript** - Zero frameworks, 100% performance.
+* **CSS3** - Advanced glassmorphism, animations, and responsive layouts.
 
 ## 🚀 Local Setup
 
-1.  **Download:**
-    Save the `index.html` file.
-2.  **Run it:**
-    Double-click `index.html` to open it in Chrome, Safari, or Edge.
-    *(Works perfectly on mobile and desktop).*
-3.  **Config:**
-    Click the ⚙️ icon to set your milk price.
+1.  **Clone the repo:**
+    ```bash
+    git clone https://github.com/shubhambelbase/voice_link.git
+    ```
+2.  **Navigate to folder:**
+    ```bash
+    cd voice_link
+    ```
+3.  **Run it:**
+    Simply open `index.html` in your browser.
+    *(Note: Microphone access requires HTTPS or localhost).*
 
 ## 🤝 Contributing
 
-Got ideas for charts, export to PDF, or darker modes?
+Got ideas for file sharing, video streams, or cleaner vibes?
 1.  Fork it.
 2.  Create your Feature Branch.
 3.  Commit your Changes.
@@ -76,4 +81,3 @@ Got ideas for charts, export to PDF, or darker modes?
 
 <div align="center">
   <p>Vibe coded with ❤️ by <a href="https://github.com/shubhambelbase">Shubham Belbase</a></p>
-</div>
